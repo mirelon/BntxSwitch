@@ -7,6 +7,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import android.content.res.Resources;
+import android.util.Log;
 
 public class Bulb {
 
@@ -15,6 +16,17 @@ public class Bulb {
 	private String url_turn_on;
 	private String url_turn_off;
 	private String url_status;
+	
+	private boolean connected;
+
+	public boolean isConnected() {
+		return connected;
+	}
+
+	public void setConnected(boolean connected) {
+		Log.d("Bulb", "setConnected: " + String.valueOf(connected));
+		this.connected = connected;
+	}
 
 	public Bulb(Resources resources) {
 		url_turn_on = resources.getString(R.string.url_turn_on);
@@ -31,11 +43,15 @@ public class Bulb {
 	}
 
 	public void turnOn() {
+		if(!isConnected())return;
+		Log.d("Bulb", "turnOn");
 		this.sendRequest(this.url_turn_on);
 		this.setTurnedOn(true);
 	}
 
 	public void turnOff() {
+		if(!isConnected())return;
+		Log.d("Bulb", "turnOff");
 		this.sendRequest(this.url_turn_off);
 		this.setTurnedOn(false);
 	}
@@ -53,9 +69,11 @@ public class Bulb {
 	}
 
 	public boolean getStatus() throws IOException {
+		if(!isConnected()) {
+			throw new IOException("Bulb::getStatus(): not connected");
+		}
 		Document doc = Jsoup.connect(this.url_status).get();
 		return doc.select("center > font").html().equals("ON");
-
 	}
 
 }

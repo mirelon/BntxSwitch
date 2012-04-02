@@ -6,5 +6,6 @@
     <string name="url_turn_off">http://10.3.5.3/1234/6/?01&amp;</string>
     <string name="url_turn_on">http://10.3.5.3/1234/6/?11&amp;</string>
     <string name="url_status">http://10.3.5.3/1234/6</string>
+    <string name="not_connected">No connectivity!</string>
 
 </resources>

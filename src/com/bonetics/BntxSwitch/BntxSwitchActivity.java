@@ -1,30 +1,40 @@
 package com.bonetics.BntxSwitch;
 
-import java.io.IOException;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
+import android.widget.TextView;
+import android.net.ConnectivityManager;
 
 public class BntxSwitchActivity extends Activity {
 	
 	private Bulb bulb;
 	private Resources resources;
-	private Handler m_handler;
-	private int m_interval = 1000;
-	private Runnable m_statusChecker;
+	private IntentFilter mNetworkStateChangedFilter;
+	private BroadcastReceiver mNetworkStateIntentReceiver;
+	private BulbStatusChecker bulbStatusChecker;
 	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	Log.d("log","Starting BntxSwitch, log it.");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         resources = getResources();
         bulb = new Bulb(resources);
+        
+        bulbStatusChecker = new BulbStatusChecker((ImageButton) findViewById(R.id.imageButton1), bulb);
+        
+        mNetworkStateChangedFilter = new IntentFilter();
+    	mNetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        mNetworkStateIntentReceiver = new BntxSwitchNetworkListener((TextView) findViewById(R.id.textView1), bulb);        
         
         final ImageButton imageButton1 = (ImageButton) findViewById(R.id.imageButton1);
         imageButton1.setOnClickListener(new OnClickListener() {
@@ -39,39 +49,21 @@ public class BntxSwitchActivity extends Activity {
 			}
         	
         });
-        
-        m_interval = 1000;
-        m_handler = new Handler();
-        m_statusChecker = new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					if(bulb.getStatus()) {
-						imageButton1.setImageResource(R.drawable.bulbon);
-					} else {
-						imageButton1.setImageResource(R.drawable.bulboff);
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				m_handler.postDelayed(this, m_interval);
-				
-			}
-        	
-        };
     }
     
     @Override
-    public void onStart() {
-    	super.onStart();
-        m_statusChecker.run();
+    public void onResume() {
+    	Log.d("log", "resume");
+    	super.onResume();
+    	bulbStatusChecker.resume();
+        registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
     }
     
     @Override
-    public void onStop() {
-    	m_handler.removeCallbacks(m_statusChecker);
-    	super.onStop();
+    public void onPause() {
+    	Log.d("log","pause");
+    	unregisterReceiver(mNetworkStateIntentReceiver);
+    	bulbStatusChecker.pause();
+    	super.onPause();
     }
 }
